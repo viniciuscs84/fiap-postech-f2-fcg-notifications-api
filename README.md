@@ -41,7 +41,7 @@ tokens, and payment credentials.
 
 `Dockerfile` publishes this service from its own repository into a .NET 8 runtime image. The image runs as the built-in non-root user and listens on port 8080. From this repository, build with `docker build -t fcg-notifications-api .` when Docker is available. The sibling `Fase 2/Orchestration` repository provides the prepared Compose entry point.
 
-The Docker Hub Personal workflow in `.github/workflows/docker-hub.yml` runs tests before publishing the public `<namespace>/fcg-notifications-api` image. Configure GitHub variable `DOCKERHUB_USERNAME` and secret `DOCKERHUB_TOKEN` in this repository after its GitHub remote exists. See the orchestration README for image tags and pull commands.
+The Docker Hub Personal workflow in `.github/workflows/docker-hub.yml` runs tests before publishing the public `viniciuscs84/fcg-notifications-api` image. The public GitHub repository is `viniciuscs84/fiap-postech-f2-fcg-notifications-api`, and its `DOCKERHUB_USERNAME` variable is configured. Add the `DOCKERHUB_TOKEN` secret after creating the public Docker Hub repository. Until then, the workflow validates the image build without publishing. See the orchestration README for image tags and pull commands.
 
 ## Tests
 
