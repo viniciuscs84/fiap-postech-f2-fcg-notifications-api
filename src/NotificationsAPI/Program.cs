@@ -9,6 +9,8 @@ CultureInfo.DefaultThreadCurrentCulture = ptBr;
 CultureInfo.DefaultThreadCurrentUICulture = ptBr;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 builder.Services.AddLocalization();
 builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(RabbitMqOptions.SectionName));
 builder.Services.AddSingleton<INotificationPresenter, ConsoleNotificationPresenter>();

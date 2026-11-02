@@ -37,6 +37,10 @@ broker connection while continuing to expose its health endpoint.
 No real email provider is used. Event payloads and console output omit passwords,
 tokens, and payment credentials.
 
+## Container preparation
+
+`Dockerfile` publishes this service from its own repository into a .NET 8 runtime image. The image runs as the built-in non-root user and listens on port 8080. From this repository, build with `docker build -t fcg-notifications-api .` when Docker is available. The sibling `Fase 2/Orchestration` repository provides the prepared Compose entry point.
+
 ## Tests
 
 ```powershell

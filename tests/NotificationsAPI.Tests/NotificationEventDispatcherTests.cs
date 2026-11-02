@@ -67,6 +67,18 @@ public sealed class NotificationEventDispatcherTests
         Assert.DoesNotContain("token", message, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task MalformedRecipientDoesNotReachConsolePresenter()
+    {
+        var presenter = new RecordingNotificationPresenter();
+        var dispatcher = new NotificationEventDispatcher(new NotificationService(presenter));
+        var payload = $$"""{"UserId":"{{Guid.NewGuid()}}","Email":"recipient@example.com\nInjected log line"}""";
+
+        await Assert.ThrowsAsync<ArgumentException>(() => dispatcher.DispatchAsync(
+            EventTopology.UserCreatedRoutingKey, Json(payload), CancellationToken.None));
+        Assert.Empty(presenter.Messages);
+    }
+
     private static ReadOnlyMemory<byte> Json(string value) => Encoding.UTF8.GetBytes(value);
 
     private sealed class RecordingNotificationPresenter : INotificationPresenter

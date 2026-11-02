@@ -6,7 +6,7 @@ public sealed class NotificationService(INotificationPresenter presenter)
 {
     public Task HandleAsync(UserCreatedEvent message, CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(message.Email);
+        ValidateRecipient(message.Email);
 
         if (message.UserId == Guid.Empty)
         {
@@ -18,17 +18,17 @@ public sealed class NotificationService(INotificationPresenter presenter)
 
     public Task HandleAsync(PaymentProcessedEvent message, CancellationToken cancellationToken)
     {
-        if (message.Status.Equals(PaymentStatus.Rejected, StringComparison.Ordinal))
+        if (string.Equals(message.Status, PaymentStatus.Rejected, StringComparison.Ordinal))
         {
             return Task.CompletedTask;
         }
 
-        if (!message.Status.Equals(PaymentStatus.Approved, StringComparison.Ordinal))
+        if (!string.Equals(message.Status, PaymentStatus.Approved, StringComparison.Ordinal))
         {
             throw new ArgumentException("Payment status must be Approved or Rejected.", nameof(message));
         }
 
-        ArgumentException.ThrowIfNullOrWhiteSpace(message.RecipientEmail);
+        ValidateRecipient(message.RecipientEmail);
 
         if (message.UserId == Guid.Empty || message.GameId == Guid.Empty)
         {
@@ -36,5 +36,13 @@ public sealed class NotificationService(INotificationPresenter presenter)
         }
 
         return presenter.PresentPurchaseApprovedAsync(message.RecipientEmail, message.GameId, cancellationToken);
+    }
+
+    private static void ValidateRecipient(string email)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
+        if (email.IndexOfAny(['\r', '\n']) >= 0 || !System.Net.Mail.MailAddress.TryCreate(email, out var address) ||
+            !string.Equals(address.Address, email, StringComparison.Ordinal))
+            throw new ArgumentException("The notification recipient email is invalid.", nameof(email));
     }
 }
