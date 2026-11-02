@@ -1,10 +1,44 @@
 # NotificationsAPI
 
-Independent .NET 8 foundation for the Phase 2 simulated email service.
+Independent .NET 8 service for the Phase 2 simulated email notifications.
 
 ```powershell
 dotnet build src/NotificationsAPI/NotificationsAPI.csproj
 dotnet run --project src/NotificationsAPI/NotificationsAPI.csproj
 ```
 
-`/health` reports process availability. The RabbitMQ consumers and pt-BR console messages for welcome and approved purchase notifications belong to Wave 2. No email provider is required.
+`/health` reports process availability. RabbitMQ consumers write the Wave 2 welcome and approved-purchase messages to the console in pt-BR. No email provider is required.
+
+## RabbitMQ configuration
+
+The service declares the durable queues `notifications.user-created` and
+`notifications.payment-processed` on the direct exchange `fcg.events`. It consumes
+the routing keys `user.created` and `payment.processed` respectively.
+
+Configuration uses the `RabbitMq` section. Supply the local broker password through
+an environment variable so credentials are not stored in the repository:
+
+```powershell
+$env:RabbitMq__Password = "<local-rabbitmq-password>"
+dotnet run --project src/NotificationsAPI/NotificationsAPI.csproj
+```
+
+`HostName`, `Port`, `UserName`, and `Exchange` can be overridden with the same
+double-underscore environment-variable convention. The service retries the initial
+broker connection while continuing to expose its health endpoint.
+
+## Observable notifications
+
+- `UserCreatedEvent` produces one simulated welcome email in pt-BR.
+- `PaymentProcessedEvent` with `Approved` produces one simulated purchase
+  confirmation in pt-BR.
+- `PaymentProcessedEvent` with `Rejected` produces no approval confirmation.
+
+No real email provider is used. Event payloads and console output omit passwords,
+tokens, and payment credentials.
+
+## Tests
+
+```powershell
+dotnet test tests/NotificationsAPI.Tests/NotificationsAPI.Tests.csproj --configuration Release
+```
