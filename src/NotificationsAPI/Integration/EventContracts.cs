@@ -1,8 +1,8 @@
 namespace NotificationsAPI.Integration;
 
-public sealed record UserCreatedEvent(Guid UserId, string Email);
+public sealed record UserCreatedEvent(Guid EventId, Guid UserId, string Email, int Version = 2);
 
-public sealed record PaymentProcessedEvent(Guid UserId, Guid GameId, string Status, string RecipientEmail);
+public sealed record PaymentProcessedEvent(Guid EventId, Guid OrderId, Guid UserId, Guid GameId, string Status, string RecipientEmail, int Version = 2);
 
 public static class PaymentStatus
 {

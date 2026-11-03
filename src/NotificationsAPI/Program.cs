@@ -16,11 +16,18 @@ builder.Services.Configure<RabbitMqOptions>(builder.Configuration.GetSection(Rab
 builder.Services.AddSingleton<INotificationPresenter, ConsoleNotificationPresenter>();
 builder.Services.AddSingleton<NotificationService>();
 builder.Services.AddSingleton<NotificationEventDispatcher>();
+builder.Services.AddSingleton<NotificationConsumerState>();
+builder.Services.AddSingleton<EventMetrics>();
+builder.Services.AddHostedService<EventMetricsWorker>();
 builder.Services.AddHostedService<RabbitMqNotificationWorker>();
 
 var app = builder.Build();
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "NotificationsAPI" }));
+app.MapGet("/health", () => Results.Ok(new { status = "live", service = "NotificationsAPI" }));
+app.MapGet("/health/live", () => Results.Ok(new { status = "live", service = "NotificationsAPI" }));
+app.MapGet("/health/ready", (NotificationConsumerState state) => state.IsReady
+    ? Results.Ok(new { status = "ready", service = "NotificationsAPI" })
+    : Results.Json(new { status = "unavailable", service = "NotificationsAPI" }, statusCode: 503));
 
 app.Run();
 

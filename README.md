@@ -1,5 +1,7 @@
 # NotificationsAPI
 
+`/health/live` reports process liveness; `/health/ready` requires both notification consumers to be subscribed to RabbitMQ. A broker disconnect changes readiness to HTTP 503 while liveness remains available. `/health` remains a liveness alias. The consumer failure counter is written to `/tmp/fcg-metrics.json` inside the container, without a public metrics endpoint.
+
 Independent .NET 8 service for the Phase 2 simulated email notifications.
 
 ```powershell
@@ -11,9 +13,12 @@ dotnet run --project src/NotificationsAPI/NotificationsAPI.csproj
 
 ## RabbitMQ configuration
 
-The service declares the durable queues `notifications.user-created` and
+The service declares durable queues `notifications.user-created` and
 `notifications.payment-processed` on the direct exchange `fcg.events`. It consumes
-the routing keys `user.created` and `payment.processed` respectively.
+the routing keys `user.created` and `payment.processed` respectively. Invalid
+events and events that fail after three processing attempts are published with
+broker confirmation to the corresponding `.dead` queue before the original
+delivery is acknowledged. A failed dead-letter publication requeues the original.
 
 Configuration uses the `RabbitMq` section. Supply the local broker password through
 an environment variable so credentials are not stored in the repository:
@@ -29,13 +34,18 @@ broker connection while continuing to expose its health endpoint.
 
 ## Observable notifications
 
+- Version 2 `UserCreatedEvent` carries an `EventId`; version 2
+  `PaymentProcessedEvent` carries `EventId` and `OrderId`. Older queued
+  messages must be drained before upgrading the producer and consumer images.
 - `UserCreatedEvent` produces one simulated welcome email in pt-BR.
 - `PaymentProcessedEvent` with `Approved` produces one simulated purchase
   confirmation in pt-BR.
 - `PaymentProcessedEvent` with `Rejected` produces no approval confirmation.
 
 No real email provider is used. Event payloads and console output omit passwords,
-tokens, and payment credentials.
+tokens, and payment credentials. Console delivery is at least once: a restart
+after output but before RabbitMQ acknowledgement can print the same simulated
+message again. Replayed events retain their original `EventId`.
 
 ## Container preparation
 

@@ -8,9 +8,9 @@ public sealed class NotificationService(INotificationPresenter presenter)
     {
         ValidateRecipient(message.Email);
 
-        if (message.UserId == Guid.Empty)
+        if (message.Version != 2 || message.EventId == Guid.Empty || message.UserId == Guid.Empty)
         {
-            throw new ArgumentException("UserId is required.", nameof(message));
+            throw new ArgumentException("EventId and UserId are required.", nameof(message));
         }
 
         return presenter.PresentWelcomeAsync(message.Email, cancellationToken);
@@ -18,6 +18,12 @@ public sealed class NotificationService(INotificationPresenter presenter)
 
     public Task HandleAsync(PaymentProcessedEvent message, CancellationToken cancellationToken)
     {
+        if (message.Version != 2 || message.EventId == Guid.Empty || message.OrderId == Guid.Empty ||
+            message.UserId == Guid.Empty || message.GameId == Guid.Empty)
+        {
+            throw new ArgumentException("EventId, OrderId, UserId and GameId are required.", nameof(message));
+        }
+
         if (string.Equals(message.Status, PaymentStatus.Rejected, StringComparison.Ordinal))
         {
             return Task.CompletedTask;
@@ -29,11 +35,6 @@ public sealed class NotificationService(INotificationPresenter presenter)
         }
 
         ValidateRecipient(message.RecipientEmail);
-
-        if (message.UserId == Guid.Empty || message.GameId == Guid.Empty)
-        {
-            throw new ArgumentException("UserId and GameId are required.", nameof(message));
-        }
 
         return presenter.PresentPurchaseApprovedAsync(message.RecipientEmail, message.GameId, cancellationToken);
     }
