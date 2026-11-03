@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notificationsapi
+  namespace: fcg-phase2
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: notificationsapi
+  template:
+    metadata:
+      labels:
+        app: notificationsapi
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+      containers:
+        - name: notificationsapi
+          image: viniciuscs84/fcg-notifications-api:sha-5f3c62bf03863227e8985f4ca63490cf08be8f24
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: fcg-config
+          env:
+            - name: RabbitMq__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-secrets
+                  key: RABBITMQ_USER
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-secrets
+                  key: RABBITMQ_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notificationsapi
+  namespace: fcg-phase2
+spec:
+  selector:
+    app: notificationsapi
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
