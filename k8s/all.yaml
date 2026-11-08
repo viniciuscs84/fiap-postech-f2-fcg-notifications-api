@@ -20,7 +20,7 @@ spec:
         runAsUser: 1654
       containers:
         - name: notificationsapi
-          image: viniciuscs84/fcg-notifications-api:sha-5f3c62bf03863227e8985f4ca63490cf08be8f24
+          image: viniciuscs84/fcg-notifications-api:sha-ec4124d7091ccde013047bcf80aa5ed09fe1f06c
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
